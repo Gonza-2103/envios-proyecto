@@ -55,7 +55,7 @@ public class EnvioService {
     //Crear (guardar) envío
     public EnvioResponseDTO guardar(EnvioRequestDTO dto){
         if (envioRepository.existsByIdSubasta(dto.getIdSubasta())){
-            throw new RuntimeException("Ya existen un envío programado para esta subasta.");
+            throw new RuntimeException("Ya existe un envío programado para esta subasta.");
         }
 
         Envio envio = new Envio();

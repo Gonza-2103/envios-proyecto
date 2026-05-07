@@ -24,9 +24,9 @@ public class Envio {
     @Column(nullable = false, length = 100)
     private String direccion;
 
-    @Column(name = "estado_envio", nullable = false, length = 30)  //Pendiente, en camino, entregado y devuelto
+    @Column(name = "estado_envio", nullable = false, length = 10)  //Pendiente, en camino, entregado y devuelto
     private String estadoEnvio;
 
-    @Column(name = "codigo_seguimiento", unique = true, length = 15)  //Generado para que el cliente rastree su obra de arte
+    @Column(name = "codigo_seguimiento", unique = true, length = 10)  //Generado para que el cliente rastree su obra de arte
     private String codigoSeguimiento;
 }
