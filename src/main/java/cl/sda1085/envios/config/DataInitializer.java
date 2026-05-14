@@ -13,7 +13,6 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-
 public class DataInitializer implements CommandLineRunner {
 
     private final EnvioRepository envioRepository;
@@ -24,9 +23,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Base de datos de envíos ya contiene datos. Omitiendo inicialización.");
             return;
         }
-
         log.info("Iniciando la creación de envíos de prueba...");
-
 
         // Envio 1: Vasija Precolombina (Subasta 1) - Ya entregado
         Envio e1 = new Envio(
@@ -55,13 +52,13 @@ public class DataInitializer implements CommandLineRunner {
                 generarCodigoSeguimiento()
         );
 
-        //se generan sólo 3 envíos de prueba para mantener consistencia con DataInitializer de Pagos (de 5 intentos de pago: 3 fueron exitosos, 1 fue rechazado y 1 está pendiente, por lo que no generan despacho)
+        //Se generan sólo 3 envíos de prueba para mantener consistencia con DataInitializer de Pagos (de 5 intentos de pago: 3 fueron exitosos, 1 fue rechazado y 1 está pendiente, por lo que no generan despacho)
         envioRepository.saveAll(List.of(e1, e2, e3));
 
         log.info("✅ Se han registrado 3 envíos de prueba con códigos de seguimiento generados dinámicamente.");
     }
 
-    // generación codigo único de seguimiento
+    //Generación codigo único de seguimiento
     private String generarCodigoSeguimiento() {
         return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

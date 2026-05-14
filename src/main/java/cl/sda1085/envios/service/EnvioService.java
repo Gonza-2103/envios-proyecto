@@ -34,16 +34,8 @@ public class EnvioService {
                 .build();
     }
 
-    //Método auxiliar de conversión (reutilizable)
-    private EnvioResponseDTO convertirADTO(Envio envio){
-        return new EnvioResponseDTO(
-                envio.getId(),
-                envio.getIdSubasta(),
-                envio.getDireccion(),
-                envio.getEstadoEnvio(),
-                envio.getCodigoSeguimiento()
-        );
-    }
+
+    //CRUD estándar
 
     //Obtener todos los envíos
     public List<EnvioResponseDTO> obtenerTodos() {
@@ -59,7 +51,7 @@ public class EnvioService {
         return envioRepository.findById(id).map(this::mapToResponseDTO);
     }
 
-    //Crear (guardar) envío
+    //Crear (guardar) nuevo envío
     @Transactional  //Permite escritura en la BD
     public EnvioResponseDTO guardar(EnvioRequestDTO dto) {
         if (envioRepository.existsByIdSubasta(dto.getIdSubasta())) {
@@ -115,17 +107,17 @@ public class EnvioService {
                 .map(this::mapToResponseDTO);
     }
 
-    //Verificar si existe el envío
-    public boolean existeEnvioParaSubasta(Long idSubasta){
-        return envioRepository.existsByIdSubasta(idSubasta);
-    }
-
     //Filtrar por estado
     public List<EnvioResponseDTO> buscarPorEstado(String estado){
         log.info("Filtrando envíos por estado: {}", estado);
         return envioRepository.findByEstadoEnvio(estado).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    //Verificar si existe el envío
+    public boolean existeEnvioParaSubasta(Long idSubasta){
+        return envioRepository.existsByIdSubasta(idSubasta);
     }
 
     //Búsqueda flexible por dirección
