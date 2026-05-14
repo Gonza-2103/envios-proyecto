@@ -1,13 +1,14 @@
 package cl.sda1085.envios.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Builder  //Permite construir el DTO de forma fluida en 'service'
 public class EnvioResponseDTO {
 
     //DTO de salida (respuesta)

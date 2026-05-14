@@ -5,28 +5,33 @@ import cl.sda1085.envios.dto.EnvioResponseDTO;
 import cl.sda1085.envios.model.Envio;
 import cl.sda1085.envios.repository.EnvioRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)  //Por defecto, todos los métodos son solo de lectura
 public class EnvioService {
 
+    //Conexion con 'repository'
     private final EnvioRepository envioRepository;
 
     //Método de apoyo para encapsulamiento de datos
-    private EnvioResponseDTO mapToResponseDTO(Envio envio){
-        return new EnvioResponseDTO(
-                envio.getId(),
-                envio.getIdSubasta(),
-                envio.getDireccion(),
-                envio.getEstadoEnvio(),
-                envio.getCodigoSeguimiento()
-        );
+    private EnvioResponseDTO mapToResponseDTO(Envio envio) {
+        return EnvioResponseDTO.builder()
+                .id(envio.getId())
+                .idSubasta(envio.getIdSubasta())
+                .direccion(envio.getDireccion())
+                .estadoEnvio(envio.getEstadoEnvio())
+                .codigoSeguimiento(envio.getCodigoSeguimiento())
+                .build();
     }
 
     //Método auxiliar de conversión (reutilizable)
@@ -41,50 +46,56 @@ public class EnvioService {
     }
 
     //Obtener todos los envíos
-    public List<EnvioResponseDTO> obtenerTodos(){
+    public List<EnvioResponseDTO> obtenerTodos() {
+        log.info("Consultando todos los envíos registrados");
         return envioRepository.findAll().stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
 
     //Obtener envío por ID
-    public Optional<EnvioResponseDTO> obtenerPorId(Long id){
+    public Optional<EnvioResponseDTO> obtenerPorId(Long id) {
+        log.info("Buscando envío con ID: {}", id);
         return envioRepository.findById(id).map(this::mapToResponseDTO);
     }
 
     //Crear (guardar) envío
-    public EnvioResponseDTO guardar(EnvioRequestDTO dto){
-        if (envioRepository.existsByIdSubasta(dto.getIdSubasta())){
+    @Transactional  //Permite escritura en la BD
+    public EnvioResponseDTO guardar(EnvioRequestDTO dto) {
+        if (envioRepository.existsByIdSubasta(dto.getIdSubasta())) {
+            log.error("Error: Ya existe un envío para la subasta ID: {}", dto.getIdSubasta());
             throw new RuntimeException("Ya existe un envío programado para esta subasta.");
         }
 
         Envio envio = new Envio();
         envio.setIdSubasta(dto.getIdSubasta());
         envio.setDireccion(dto.getDireccion());
-        envio.setEstadoEnvio("PENDIENTE"); //Estado inicial por defecto
+        envio.setEstadoEnvio("PENDIENTE");
 
-        //Generación automática del código de seguimiento (8 caracteres únicos)
         String codigoGenerado = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         envio.setCodigoSeguimiento(codigoGenerado);
 
-        //Guardar en la base de datos
         Envio envioGuardado = envioRepository.save(envio);
+        log.info("Nuevo envío creado exitosamente - ID: {}, Seguimiento: {}", envioGuardado.getId(), codigoGenerado);
 
-        //Devolver la respuesta como DTO
-        return convertirADTO(envioGuardado);
+        return mapToResponseDTO(envioGuardado);
     }
 
     //Actualizar envío
-    public Optional<EnvioResponseDTO> actualizar(Long id, EnvioRequestDTO dto){
+    @Transactional
+    public Optional<EnvioResponseDTO> actualizar(Long id, EnvioRequestDTO dto) {
+        log.info("Actualizando envío ID: {}", id);
         return envioRepository.findById(id).map(envioExistente -> {
-           envioExistente.setDireccion(dto.getDireccion());
-           envioExistente.setEstadoEnvio(dto.getEstadoEnvio());
-           return mapToResponseDTO(envioRepository.save(envioExistente));
+            envioExistente.setDireccion(dto.getDireccion());
+            envioExistente.setEstadoEnvio(dto.getEstadoEnvio());
+            return mapToResponseDTO(envioRepository.save(envioExistente));
         });
     }
 
     //Eliminar envío
+    @Transactional
     public void eliminar(Long id){
+        log.warn("Eliminando envío ID: {}", id);
         envioRepository.deleteById(id);
     }
 
@@ -93,6 +104,7 @@ public class EnvioService {
 
     //Buscar por código de seguimiento
     public Optional<EnvioResponseDTO> buscarPorCodigo(String codigo){
+        log.info("Buscando envío por código de seguimiento: {}", codigo);
         return envioRepository.findByCodigoSeguimiento(codigo)
                 .map(this::mapToResponseDTO);
     }
@@ -110,6 +122,7 @@ public class EnvioService {
 
     //Filtrar por estado
     public List<EnvioResponseDTO> buscarPorEstado(String estado){
+        log.info("Filtrando envíos por estado: {}", estado);
         return envioRepository.findByEstadoEnvio(estado).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -120,5 +133,11 @@ public class EnvioService {
         return envioRepository.findByDireccionContainingIgnoreCase(direccion)
                 .stream().map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    //Contar cuántos envíos hay en un estado particular
+    public long contarPorEstado(String estado) {
+        log.info("Contando envíos con estado: {}", estado);
+        return envioRepository.countByEstadoEnvio(estado);
     }
 }

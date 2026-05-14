@@ -24,4 +24,7 @@ public interface EnvioRepository extends JpaRepository<Envio, Long> {
 
     //Buscar direcciones que contengan un texto
     List<Envio> findByDireccionContainingIgnoreCase(String direccion);
+
+    //Contar cuántos envíos hay en un estado particular (Ej: "En Camino")
+    long countByEstadoEnvio(String estadoEnvio);
 }
